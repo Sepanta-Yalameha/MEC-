@@ -66,7 +66,7 @@ function App() {
   };
 
   // Block interactions if terms not accepted
-  const canInteract = termsAccepted && userRole;
+  const canInteract = termsAccepted;
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">
