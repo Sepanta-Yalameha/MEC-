@@ -91,7 +91,7 @@ function App() {
           </div>
 
           <div className="flex-shrink-0">
-            <ReportHazardButton 
+            <ReportHazardButton
               canInteract={canInteract}
               onClick={() => setIsReportModalOpen(true)}
             />

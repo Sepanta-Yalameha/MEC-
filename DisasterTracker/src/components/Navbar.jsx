@@ -19,7 +19,7 @@ export default function Navbar({
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <svg
-              className="w-8 h-8 text-red-500"
+              className="w-7 h-7 text-red-500"
               fill="currentColor"
               viewBox="0 0 20 20"
             >
@@ -29,7 +29,7 @@ export default function Navbar({
                 clipRule="evenodd"
               />
             </svg>
-            <h1 className="text-xl font-bold">Disaster Tracker</h1>
+            <h1 className="text-xl font-bold leading-none">Eyes for Energy</h1>
           </div>
 
           <div className="flex items-center space-x-4">
