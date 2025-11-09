@@ -7,15 +7,15 @@ export default function EventList({
   selectedEventId,
 }) {
   return (
-    <div className="h-full flex flex-col bg-white">
-      <div className="p-4 border-b border-gray-200 bg-gray-50">
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="p-4 border-b border-gray-200 bg-gray-50 flex-shrink-0">
         <h2 className="text-lg font-bold text-gray-900">Current Events</h2>
         <p className="text-sm text-gray-600 mt-1">
           {events.length} active incidents
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="overflow-y-auto min-h-0 flex-1">
         {events.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             <svg
