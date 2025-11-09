@@ -112,11 +112,13 @@ export function calculateDetourRoute(start, end, obstacles) {
 
 /**
  * Get color for risk level
- * @param {string} riskLevel - 'high' or 'low'
+ * @param {string} riskLevel - 'high', 'low', or 'firefighter-only'
  * @returns {string} Hex color code
  */
 export function getRiskColor(riskLevel) {
-  return riskLevel === "high" ? "#DC2626" : "#F59E0B";
+  if (riskLevel === "high") return "#DC2626"; // Red
+  if (riskLevel === "firefighter-only") return "#7C3AED"; // Purple
+  return "#F59E0B"; // Orange for low
 }
 
 /**

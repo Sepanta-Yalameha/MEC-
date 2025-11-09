@@ -90,4 +90,38 @@ export const mockEvents = [
     reportedBy: "Trail Maintenance",
     timestamp: new Date("2025-11-09T13:45:00"),
   },
+  // Firefighter-only events (power terminals)
+  {
+    id: 8,
+    title: "Power Terminal Alpha - System Failure",
+    description:
+      "Main power distribution terminal experiencing cascading failures. Critical infrastructure requiring immediate firefighter assessment for electrical hazards.",
+    riskLevel: "firefighter-only",
+    lat: 52.868,
+    lng: -118.095,
+    reportedBy: "Utility Company",
+    timestamp: new Date("2025-11-09T06:00:00"),
+  },
+  {
+    id: 9,
+    title: "Substation Bravo - Transformer Fire Risk",
+    description:
+      "Electrical substation showing signs of overheating. High voltage equipment at risk of fire. Firefighter monitoring required.",
+    riskLevel: "firefighter-only",
+    lat: 52.885,
+    lng: -118.07,
+    reportedBy: "Power Grid Operator",
+    timestamp: new Date("2025-11-09T05:30:00"),
+  },
+  {
+    id: 10,
+    title: "Emergency Generator Station - Fuel Leak",
+    description:
+      "Backup power facility has developed fuel leak near electrical systems. Potential fire hazard requiring firefighter containment.",
+    riskLevel: "firefighter-only",
+    lat: 52.878,
+    lng: -118.088,
+    reportedBy: "Facility Manager",
+    timestamp: new Date("2025-11-09T08:00:00"),
+  },
 ];

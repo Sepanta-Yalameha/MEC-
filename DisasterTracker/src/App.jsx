@@ -21,10 +21,14 @@ function App() {
   // Filter events based on user role
   const filteredEvents = events.filter((event) => {
     if (userRole === "volunteer") {
+      // Volunteers only see low-risk events
       return event.riskLevel === "low";
+    } else if (userRole === "firefighter") {
+      // Firefighters see everything (low, high, and firefighter-only)
+      return true;
     }
-    // Firefighters see all events
-    return true;
+    // If no role selected, show nothing
+    return false;
   });
 
   // Sort events by distance from user
@@ -47,10 +51,10 @@ function App() {
 
   const handleRoleChange = (role) => {
     setUserRole(role);
-    // Clear selection if switching to volunteer and selected event is high risk
+    // Clear selection if switching to volunteer and selected event is not low-risk
     if (role === "volunteer") {
       const selectedEvent = events.find((e) => e.id === selectedEventId);
-      if (selectedEvent && selectedEvent.riskLevel === "high") {
+      if (selectedEvent && selectedEvent.riskLevel !== "low") {
         setSelectedEventId(null);
       }
     }

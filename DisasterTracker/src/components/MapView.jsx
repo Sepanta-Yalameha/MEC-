@@ -33,67 +33,69 @@ export default function MapView({
   useEffect(() => {
     if (map.current) return; // Initialize map only once
     if (!mapContainer.current) {
-      console.error('Map container ref is not available');
+      console.error("Map container ref is not available");
       return;
     }
     if (!MAPBOX_TOKEN) {
-      setMapError('Mapbox token is missing. Please check your .env file.');
+      setMapError("Mapbox token is missing. Please check your .env file.");
       return;
     }
 
     // Dynamically import mapbox-gl
-    import('mapbox-gl').then((mapboxModule) => {
-      mapboxgl = mapboxModule.default;
-      
-      try {
-        // Set Mapbox access token
-        mapboxgl.accessToken = MAPBOX_TOKEN;
-        
-        console.log('Initializing Mapbox map...');
-        console.log('Container:', mapContainer.current);
-        console.log('Center:', center);
-      
-        map.current = new mapboxgl.Map({
-          container: mapContainer.current,
-          style: "mapbox://styles/mapbox/streets-v12",
-          center: [center.lng, center.lat],
-          zoom: 12,
-        });
+    import("mapbox-gl")
+      .then((mapboxModule) => {
+        mapboxgl = mapboxModule.default;
 
-        console.log('Map instance created successfully');
+        try {
+          // Set Mapbox access token
+          mapboxgl.accessToken = MAPBOX_TOKEN;
 
-        map.current.on('error', (e) => {
-          console.error('Mapbox error:', e);
-          setMapError(e.error?.message || 'Map loading error');
-        });
+          console.log("Initializing Mapbox map...");
+          console.log("Container:", mapContainer.current);
+          console.log("Center:", center);
 
-        map.current.on('load', () => {
-          console.log('Map loaded successfully');
-        });
+          map.current = new mapboxgl.Map({
+            container: mapContainer.current,
+            style: "mapbox://styles/mapbox/streets-v12",
+            center: [center.lng, center.lat],
+            zoom: 12,
+          });
 
-        map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+          console.log("Map instance created successfully");
 
-        // Add user location marker
-        const userEl = document.createElement("div");
-        userEl.className = "user-marker";
-        userEl.style.width = "20px";
-        userEl.style.height = "20px";
-        userEl.style.borderRadius = "50%";
-        userEl.style.backgroundColor = "#3B82F6";
-        userEl.style.border = "3px solid white";
-        userEl.style.boxShadow = "0 2px 4px rgba(0,0,0,0.3)";
+          map.current.on("error", (e) => {
+            console.error("Mapbox error:", e);
+            setMapError(e.error?.message || "Map loading error");
+          });
 
-        userMarker.current = new mapboxgl.Marker(userEl)
-          .setLngLat([userLocation.lng, userLocation.lat])
-          .addTo(map.current);
-      } catch (error) {
-        console.error('Error initializing map:', error);
-        setMapError(error.message || 'Failed to initialize map');
-      }
-    }).catch((error) => {
-      console.error('Error loading mapbox-gl:', error);
-      setMapError('Failed to load map library');
-    });
+          map.current.on("load", () => {
+            console.log("Map loaded successfully");
+          });
+
+          map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+          // Add user location marker
+          const userEl = document.createElement("div");
+          userEl.className = "user-marker";
+          userEl.style.width = "20px";
+          userEl.style.height = "20px";
+          userEl.style.borderRadius = "50%";
+          userEl.style.backgroundColor = "#3B82F6";
+          userEl.style.border = "3px solid white";
+          userEl.style.boxShadow = "0 2px 4px rgba(0,0,0,0.3)";
+
+          userMarker.current = new mapboxgl.Marker(userEl)
+            .setLngLat([userLocation.lng, userLocation.lat])
+            .addTo(map.current);
+        } catch (error) {
+          console.error("Error initializing map:", error);
+          setMapError(error.message || "Failed to initialize map");
+        }
+      })
+      .catch((error) => {
+        console.error("Error loading mapbox-gl:", error);
+        setMapError("Failed to load map library");
+      });
 
     return () => {
       if (map.current) {
@@ -125,12 +127,6 @@ export default function MapView({
           ? "0 4px 12px rgba(0,0,0,0.4)"
           : "0 2px 6px rgba(0,0,0,0.3)";
       el.style.cursor = "pointer";
-      el.style.transition = "all 0.3s ease";
-
-      // Add pulse animation for selected marker
-      if (selectedEventId === event.id) {
-        el.style.animation = "pulse 2s infinite";
-      }
 
       const marker = new mapboxgl.Marker(el)
         .setLngLat([event.lng, event.lat])
@@ -172,89 +168,150 @@ export default function MapView({
     routeLayers.current = [];
   };
 
-  // Show routes to selected event
-  const showRoutes = (event) => {
+  // Show routes to selected event using Mapbox Directions API
+  const showRoutes = async (event) => {
     if (!map.current) return;
 
     clearRoutes();
 
-    const obstacles = events
-      .filter((e) => e.id !== event.id)
-      .map((e) => ({ lat: e.lat, lng: e.lng }));
+    try {
+      // Fetch driving route from Mapbox Directions API
+      const drivingUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation.lng},${userLocation.lat};${event.lng},${event.lat}?geometries=geojson&access_token=${MAPBOX_TOKEN}`;
 
-    const directRoute = calculateDirectRoute(userLocation, event);
-    const detourRoute = calculateDetourRoute(userLocation, event, obstacles);
+      const drivingResponse = await fetch(drivingUrl);
+      const drivingData = await drivingResponse.json();
 
-    // Add direct route (solid line)
-    const directLayerId = "route-direct";
-    map.current.addSource(directLayerId, {
-      type: "geojson",
-      data: {
-        type: "Feature",
-        properties: {},
-        geometry: {
-          type: "LineString",
-          coordinates: directRoute,
+      if (drivingData.routes && drivingData.routes.length > 0) {
+        const drivingRoute = drivingData.routes[0].geometry.coordinates;
+
+        // Add driving route (solid blue line)
+        const drivingLayerId = "route-driving";
+        map.current.addSource(drivingLayerId, {
+          type: "geojson",
+          data: {
+            type: "Feature",
+            properties: {
+              distance: drivingData.routes[0].distance,
+              duration: drivingData.routes[0].duration,
+            },
+            geometry: {
+              type: "LineString",
+              coordinates: drivingRoute,
+            },
+          },
+        });
+
+        map.current.addLayer({
+          id: drivingLayerId,
+          type: "line",
+          source: drivingLayerId,
+          layout: {
+            "line-join": "round",
+            "line-cap": "round",
+          },
+          paint: {
+            "line-color": "#3B82F6",
+            "line-width": 4,
+            "line-opacity": 0.8,
+          },
+        });
+
+        routeLayers.current.push(drivingLayerId);
+
+        // Try to get walking route as alternative
+        const walkingUrl = `https://api.mapbox.com/directions/v5/mapbox/walking/${userLocation.lng},${userLocation.lat};${event.lng},${event.lat}?geometries=geojson&access_token=${MAPBOX_TOKEN}`;
+
+        const walkingResponse = await fetch(walkingUrl);
+        const walkingData = await walkingResponse.json();
+
+        if (walkingData.routes && walkingData.routes.length > 0) {
+          const walkingRoute = walkingData.routes[0].geometry.coordinates;
+
+          // Add walking route (dashed green line)
+          const walkingLayerId = "route-walking";
+          map.current.addSource(walkingLayerId, {
+            type: "geojson",
+            data: {
+              type: "Feature",
+              properties: {
+                distance: walkingData.routes[0].distance,
+                duration: walkingData.routes[0].duration,
+              },
+              geometry: {
+                type: "LineString",
+                coordinates: walkingRoute,
+              },
+            },
+          });
+
+          map.current.addLayer({
+            id: walkingLayerId,
+            type: "line",
+            source: walkingLayerId,
+            layout: {
+              "line-join": "round",
+              "line-cap": "round",
+            },
+            paint: {
+              "line-color": "#10B981",
+              "line-width": 4,
+              "line-opacity": 0.8,
+              "line-dasharray": [2, 2],
+            },
+          });
+
+          routeLayers.current.push(walkingLayerId);
+        }
+
+        // Fit map to show entire route
+        const bounds = new mapboxgl.LngLatBounds();
+        drivingRoute.forEach((coord) => bounds.extend(coord));
+
+        map.current.fitBounds(bounds, {
+          padding: 100,
+          duration: 1500,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching route:", error);
+      setMapError("Failed to calculate route. Using direct path.");
+
+      // Fallback to simple direct line
+      const directRoute = [
+        [userLocation.lng, userLocation.lat],
+        [event.lng, event.lat],
+      ];
+      const directLayerId = "route-direct";
+
+      map.current.addSource(directLayerId, {
+        type: "geojson",
+        data: {
+          type: "Feature",
+          properties: {},
+          geometry: {
+            type: "LineString",
+            coordinates: directRoute,
+          },
         },
-      },
-    });
+      });
 
-    map.current.addLayer({
-      id: directLayerId,
-      type: "line",
-      source: directLayerId,
-      layout: {
-        "line-join": "round",
-        "line-cap": "round",
-      },
-      paint: {
-        "line-color": "#3B82F6",
-        "line-width": 4,
-        "line-opacity": 0.8,
-      },
-    });
-
-    // Add detour route (dashed line)
-    const detourLayerId = "route-detour";
-    map.current.addSource(detourLayerId, {
-      type: "geojson",
-      data: {
-        type: "Feature",
-        properties: {},
-        geometry: {
-          type: "LineString",
-          coordinates: detourRoute,
+      map.current.addLayer({
+        id: directLayerId,
+        type: "line",
+        source: directLayerId,
+        layout: {
+          "line-join": "round",
+          "line-cap": "round",
         },
-      },
-    });
+        paint: {
+          "line-color": "#3B82F6",
+          "line-width": 4,
+          "line-opacity": 0.8,
+        },
+      });
 
-    map.current.addLayer({
-      id: detourLayerId,
-      type: "line",
-      source: detourLayerId,
-      layout: {
-        "line-join": "round",
-        "line-cap": "round",
-      },
-      paint: {
-        "line-color": "#10B981",
-        "line-width": 4,
-        "line-opacity": 0.8,
-        "line-dasharray": [2, 2],
-      },
-    });
-
-    routeLayers.current = [directLayerId, detourLayerId];
-
-    // Fit map to show entire route
-    const bounds = new mapboxgl.LngLatBounds();
-    bounds.extend([userLocation.lng, userLocation.lat]);
-    bounds.extend([event.lng, event.lat]);
-
-    map.current.fitBounds(bounds, {
-      padding: 100,
-      duration: 1500,
-    });
+      routeLayers.current = [directLayerId];
+    }
   };
 
   const handleGetRoute = () => {
@@ -311,10 +368,16 @@ export default function MapView({
                 className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
                   selectedEvent.riskLevel === "high"
                     ? "bg-red-100 text-red-800"
+                    : selectedEvent.riskLevel === "firefighter-only"
+                    ? "bg-purple-100 text-purple-800"
                     : "bg-yellow-100 text-yellow-800"
                 }`}
               >
-                {selectedEvent.riskLevel === "high" ? "HIGH RISK" : "LOW RISK"}
+                {selectedEvent.riskLevel === "high"
+                  ? "HIGH RISK"
+                  : selectedEvent.riskLevel === "firefighter-only"
+                  ? "POWER TERMINAL"
+                  : "LOW RISK"}
               </span>
             </div>
 
@@ -377,18 +440,20 @@ export default function MapView({
               <div className="mt-3 text-xs text-gray-600 space-y-1">
                 <div className="flex items-center">
                   <div className="w-8 h-0.5 bg-blue-500 mr-2"></div>
-                  <span>Direct route</span>
+                  <span>Driving route</span>
                 </div>
-                <div className="flex items-center">
-                  <div
-                    className="w-8 h-0.5 bg-green-500 mr-2"
-                    style={{
-                      backgroundImage:
-                        "repeating-linear-gradient(to right, #10B981 0, #10B981 4px, transparent 4px, transparent 8px)",
-                    }}
-                  ></div>
-                  <span>Detour route (avoids obstacles)</span>
-                </div>
+                {routeLayers.current.length > 1 && (
+                  <div className="flex items-center">
+                    <div
+                      className="w-8 h-0.5 bg-green-500 mr-2"
+                      style={{
+                        backgroundImage:
+                          "repeating-linear-gradient(to right, #10B981 0, #10B981 4px, transparent 4px, transparent 8px)",
+                      }}
+                    ></div>
+                    <span>Walking route</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
