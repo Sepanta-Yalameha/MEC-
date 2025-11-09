@@ -176,7 +176,7 @@ export default function MapView({
 
     try {
       // Get direct driving route
-      const directUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation.lng},${userLocation.lat};${event.lng},${event.lat}?geometries=geojson&overview=full&access_token=${MAPBOX_TOKEN}`;
+      const directUrl = `https://api.mapbox.com/directions/v5/mapbox/walking/${userLocation.lng},${userLocation.lat};${event.lng},${event.lat}?geometries=geojson&overview=full&access_token=${MAPBOX_TOKEN}`;
 
       const directResponse = await fetch(directUrl);
       const directData = await directResponse.json();
