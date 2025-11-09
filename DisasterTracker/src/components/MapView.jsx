@@ -125,12 +125,6 @@ export default function MapView({
           ? "0 4px 12px rgba(0,0,0,0.4)"
           : "0 2px 6px rgba(0,0,0,0.3)";
       el.style.cursor = "pointer";
-      el.style.transition = "all 0.3s ease";
-
-      // Add pulse animation for selected marker
-      if (selectedEventId === event.id) {
-        el.style.animation = "pulse 2s infinite";
-      }
 
       const marker = new mapboxgl.Marker(el)
         .setLngLat([event.lng, event.lat])
