@@ -43,9 +43,7 @@ export default function Navbar({
                   <>
                     <span
                       className={`w-2 h-2 rounded-full ${
-                        userRole === "firefighter"
-                          ? "bg-red-500"
-                          : "bg-blue-500"
+                        userRole === "technician" ? "bg-red-500" : "bg-blue-500"
                       }`}
                     ></span>
                     <span className="capitalize">{userRole}</span>
@@ -69,11 +67,11 @@ export default function Navbar({
               {showRoleMenu && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl z-50 overflow-hidden">
                   <button
-                    onClick={() => handleRoleSelect("firefighter")}
+                    onClick={() => handleRoleSelect("technician")}
                     className="w-full text-left px-4 py-3 hover:bg-gray-100 text-gray-800 transition-colors flex items-center space-x-2"
                   >
                     <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                    <span>Sign in as Firefighter</span>
+                    <span>Sign in as Technician</span>
                   </button>
                   <button
                     onClick={() => handleRoleSelect("volunteer")}

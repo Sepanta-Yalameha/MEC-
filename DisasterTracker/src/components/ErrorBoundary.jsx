@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { Component } from "react";
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -11,7 +11,7 @@ class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo);
+    console.error("Error caught by boundary:", error, errorInfo);
     this.setState({ error, errorInfo });
   }
 
@@ -20,9 +20,13 @@ class ErrorBoundary extends Component {
       return (
         <div className="min-h-screen bg-red-50 flex items-center justify-center p-8">
           <div className="bg-white rounded-lg shadow-xl p-8 max-w-2xl">
-            <h1 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h1>
+            <h1 className="text-2xl font-bold text-red-600 mb-4">
+              Something went wrong
+            </h1>
             <details className="text-sm">
-              <summary className="cursor-pointer font-semibold mb-2">Error details</summary>
+              <summary className="cursor-pointer font-semibold mb-2">
+                Error details
+              </summary>
               <pre className="bg-gray-100 p-4 rounded overflow-auto">
                 {this.state.error && this.state.error.toString()}
                 {this.state.errorInfo && this.state.errorInfo.componentStack}

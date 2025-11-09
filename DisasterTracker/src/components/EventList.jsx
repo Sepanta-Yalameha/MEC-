@@ -53,14 +53,14 @@ export default function EventList({
                     className={`px-2 py-1 text-xs font-semibold rounded-full flex-shrink-0 ${
                       event.riskLevel === "high"
                         ? "bg-red-100 text-red-800"
-                        : event.riskLevel === "firefighter-only"
+                        : event.riskLevel === "technician-only"
                         ? "bg-purple-100 text-purple-800"
                         : "bg-yellow-100 text-yellow-800"
                     }`}
                   >
                     {event.riskLevel === "high"
                       ? "HIGH RISK"
-                      : event.riskLevel === "firefighter-only"
+                      : event.riskLevel === "technician-only"
                       ? "POWER TERMINAL"
                       : "LOW RISK"}
                   </span>

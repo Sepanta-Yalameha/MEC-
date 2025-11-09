@@ -12,7 +12,7 @@ Disaster Tracker helps volunteers and professionals coordinate recovery efforts 
 
 - **Interactive Map**: Mapbox-powered map centered on Jasper, Alberta
 - **Event Tracking**: View and manage disaster-related events with real-time distance calculations
-- **Role-Based Access**: Two user roles (Firefighter and Volunteer) with different permission levels
+- **Role-Based Access**: Two user roles (Technician and Volunteer) with different permission levels
 - **Risk Management**: Events categorized as high-risk (professionals only) or low-risk (volunteers allowed)
 - **Intelligent Routing**:
   - Direct route to events
@@ -21,7 +21,7 @@ Disaster Tracker helps volunteers and professionals coordinate recovery efforts 
 
 ### User Roles
 
-**Firefighter (Professional)**
+**Technician (Professional)**
 
 - Full access to all events (high-risk and low-risk)
 - Can report any type of hazard
@@ -92,7 +92,7 @@ The production-ready files will be in the `dist/` directory.
 ### First-Time Setup
 
 1. Accept the Terms & Conditions when prompted
-2. Sign in as either Firefighter or Volunteer using the navbar dropdown
+2. Sign in as either Technician or Volunteer using the navbar dropdown
 
 ### Viewing Events
 
@@ -121,7 +121,7 @@ The production-ready files will be in the `dist/` directory.
 
 ### Switching Roles
 
-- Use the dropdown in the navbar to switch between Firefighter and Volunteer
+- Use the dropdown in the navbar to switch between Technician and Volunteer
 - The map and event list will update automatically based on your role
 - High-risk events are hidden when signed in as Volunteer
 

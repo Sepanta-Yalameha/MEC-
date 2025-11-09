@@ -9,22 +9,27 @@ import "./App.css";
 
 function App() {
   console.log("App component rendering...");
-  
+
   const [userRole, setUserRole] = useState(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [events, setEvents] = useState(mockEvents);
   const [selectedEventId, setSelectedEventId] = useState(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
-  console.log('State:', { userRole, termsAccepted, eventsCount: events.length, mockEventsCount: mockEvents.length });
+  console.log("State:", {
+    userRole,
+    termsAccepted,
+    eventsCount: events.length,
+    mockEventsCount: mockEvents.length,
+  });
 
   // Filter events based on user role
   const filteredEvents = events.filter((event) => {
     if (userRole === "volunteer") {
       // Volunteers only see low-risk events
       return event.riskLevel === "low";
-    } else if (userRole === "firefighter") {
-      // Firefighters see everything (low, high, and firefighter-only)
+    } else if (userRole === "technician") {
+      // Technicians see everything (low, high, and technician-only)
       return true;
     }
     // If no role selected, show nothing
@@ -35,9 +40,9 @@ function App() {
   let sortedEvents = [];
   try {
     sortedEvents = sortEventsByDistance(filteredEvents, USER_LOCATION);
-    console.log('Sorted events:', sortedEvents.length);
+    console.log("Sorted events:", sortedEvents.length);
   } catch (error) {
-    console.error('Error sorting events:', error);
+    console.error("Error sorting events:", error);
     sortedEvents = filteredEvents;
   }
 
@@ -137,7 +142,7 @@ function App() {
                 <p className="text-gray-600">
                   {!termsAccepted
                     ? "Please accept the terms and conditions to access the disaster tracker."
-                    : "Please sign in as a Firefighter or Volunteer to view events and interact with the map."}
+                    : "Please sign in as a Technician or Volunteer to view events and interact with the map."}
                 </p>
               </div>
             </div>
@@ -154,7 +159,9 @@ function App() {
           )}
           {!termsAccepted && (
             <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-              <p className="text-gray-500">Map will load after accepting terms</p>
+              <p className="text-gray-500">
+                Map will load after accepting terms
+              </p>
             </div>
           )}
         </div>
@@ -166,6 +173,7 @@ function App() {
         onClose={() => setIsReportModalOpen(false)}
         onSubmit={handleReportHazard}
         userRole={userRole}
+        userLocation={USER_LOCATION}
       />
     </div>
   );

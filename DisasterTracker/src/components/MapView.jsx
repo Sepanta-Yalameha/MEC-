@@ -175,36 +175,36 @@ export default function MapView({
     clearRoutes();
 
     try {
-      // Fetch driving route from Mapbox Directions API
-      const drivingUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation.lng},${userLocation.lat};${event.lng},${event.lat}?geometries=geojson&access_token=${MAPBOX_TOKEN}`;
+      // Get direct driving route
+      const directUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation.lng},${userLocation.lat};${event.lng},${event.lat}?geometries=geojson&overview=full&access_token=${MAPBOX_TOKEN}`;
 
-      const drivingResponse = await fetch(drivingUrl);
-      const drivingData = await drivingResponse.json();
+      const directResponse = await fetch(directUrl);
+      const directData = await directResponse.json();
 
-      if (drivingData.routes && drivingData.routes.length > 0) {
-        const drivingRoute = drivingData.routes[0].geometry.coordinates;
+      if (directData.routes && directData.routes.length > 0) {
+        const directRoute = directData.routes[0].geometry.coordinates;
 
-        // Add driving route (solid blue line)
-        const drivingLayerId = "route-driving";
-        map.current.addSource(drivingLayerId, {
+        // Add direct route (solid blue line)
+        const directLayerId = "route-direct";
+        map.current.addSource(directLayerId, {
           type: "geojson",
           data: {
             type: "Feature",
             properties: {
-              distance: drivingData.routes[0].distance,
-              duration: drivingData.routes[0].duration,
+              distance: directData.routes[0].distance,
+              duration: directData.routes[0].duration,
             },
             geometry: {
               type: "LineString",
-              coordinates: drivingRoute,
+              coordinates: directRoute,
             },
           },
         });
 
         map.current.addLayer({
-          id: drivingLayerId,
+          id: directLayerId,
           type: "line",
-          source: drivingLayerId,
+          source: directLayerId,
           layout: {
             "line-join": "round",
             "line-cap": "round",
@@ -216,56 +216,53 @@ export default function MapView({
           },
         });
 
-        routeLayers.current.push(drivingLayerId);
+        routeLayers.current.push(directLayerId);
 
-        // Try to get walking route as alternative
-        const walkingUrl = `https://api.mapbox.com/directions/v5/mapbox/walking/${userLocation.lng},${userLocation.lat};${event.lng},${event.lat}?geometries=geojson&access_token=${MAPBOX_TOKEN}`;
+        // Check for obstacles along the route
+        const obstaclesInPath = events
+          .filter((e) => e.id !== event.id)
+          .map((e) => {
+            const distToStart = calculateDistance(userLocation, {
+              lat: e.lat,
+              lng: e.lng,
+            });
+            const distToEnd = calculateDistance(event, {
+              lat: e.lat,
+              lng: e.lng,
+            });
+            const directDist = calculateDistance(userLocation, event);
 
-        const walkingResponse = await fetch(walkingUrl);
-        const walkingData = await walkingResponse.json();
+            return {
+              ...e,
+              distToStart,
+              distToEnd,
+              directDist,
+              // Check if obstacle is roughly between start and end
+              isInPath:
+                distToStart + distToEnd < directDist * 1.3 &&
+                distToStart > 0.2 &&
+                distToEnd > 0.2,
+            };
+          })
+          .filter((e) => e.isInPath)
+          .sort((a, b) => a.distToStart - b.distToStart);
 
-        if (walkingData.routes && walkingData.routes.length > 0) {
-          const walkingRoute = walkingData.routes[0].geometry.coordinates;
+        // If obstacles found, show warning
+        if (obstaclesInPath.length > 0) {
+          const obstacleNames = obstaclesInPath.map((o) => o.title).join(", ");
+          setMapError(
+            `⚠️ WARNING: ${obstaclesInPath.length} obstacle(s) detected on route: ${obstacleNames}`
+          );
 
-          // Add walking route (dashed green line)
-          const walkingLayerId = "route-walking";
-          map.current.addSource(walkingLayerId, {
-            type: "geojson",
-            data: {
-              type: "Feature",
-              properties: {
-                distance: walkingData.routes[0].distance,
-                duration: walkingData.routes[0].duration,
-              },
-              geometry: {
-                type: "LineString",
-                coordinates: walkingRoute,
-              },
-            },
-          });
-
-          map.current.addLayer({
-            id: walkingLayerId,
-            type: "line",
-            source: walkingLayerId,
-            layout: {
-              "line-join": "round",
-              "line-cap": "round",
-            },
-            paint: {
-              "line-color": "#10B981",
-              "line-width": 4,
-              "line-opacity": 0.8,
-              "line-dasharray": [2, 2],
-            },
-          });
-
-          routeLayers.current.push(walkingLayerId);
+          console.log("Obstacles detected on route:", obstaclesInPath);
+        } else {
+          // Clear any previous warnings
+          setMapError(null);
         }
 
         // Fit map to show entire route
         const bounds = new mapboxgl.LngLatBounds();
-        drivingRoute.forEach((coord) => bounds.extend(coord));
+        directRoute.forEach((coord) => bounds.extend(coord));
 
         map.current.fitBounds(bounds, {
           padding: 100,
@@ -274,7 +271,7 @@ export default function MapView({
       }
     } catch (error) {
       console.error("Error fetching route:", error);
-      setMapError("Failed to calculate route. Using direct path.");
+      setMapError("Failed to calculate route.");
 
       // Fallback to simple direct line
       const directRoute = [
@@ -323,13 +320,22 @@ export default function MapView({
   const handleClosePopup = () => {
     setSelectedEvent(null);
     clearRoutes();
+    setMapError(null); // Clear obstacle warnings when closing popup
   };
 
   return (
     <div className="relative w-full h-full">
       {mapError && (
-        <div className="absolute top-4 left-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50">
-          <strong className="font-bold">Map Error: </strong>
+        <div
+          className={`absolute top-4 left-4 right-4 px-4 py-3 rounded z-50 ${
+            mapError.includes("WARNING")
+              ? "bg-yellow-100 border border-yellow-400 text-yellow-800"
+              : "bg-red-100 border border-red-400 text-red-700"
+          }`}
+        >
+          <strong className="font-bold">
+            {mapError.includes("WARNING") ? "" : "Error: "}
+          </strong>
           <span className="block sm:inline">{mapError}</span>
         </div>
       )}
@@ -368,14 +374,14 @@ export default function MapView({
                 className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
                   selectedEvent.riskLevel === "high"
                     ? "bg-red-100 text-red-800"
-                    : selectedEvent.riskLevel === "firefighter-only"
+                    : selectedEvent.riskLevel === "technician-only"
                     ? "bg-purple-100 text-purple-800"
                     : "bg-yellow-100 text-yellow-800"
                 }`}
               >
                 {selectedEvent.riskLevel === "high"
                   ? "HIGH RISK"
-                  : selectedEvent.riskLevel === "firefighter-only"
+                  : selectedEvent.riskLevel === "technician-only"
                   ? "POWER TERMINAL"
                   : "LOW RISK"}
               </span>
@@ -437,23 +443,11 @@ export default function MapView({
             </button>
 
             {routeLayers.current.length > 0 && (
-              <div className="mt-3 text-xs text-gray-600 space-y-1">
+              <div className="mt-3 text-xs text-gray-600">
                 <div className="flex items-center">
                   <div className="w-8 h-0.5 bg-blue-500 mr-2"></div>
                   <span>Driving route</span>
                 </div>
-                {routeLayers.current.length > 1 && (
-                  <div className="flex items-center">
-                    <div
-                      className="w-8 h-0.5 bg-green-500 mr-2"
-                      style={{
-                        backgroundImage:
-                          "repeating-linear-gradient(to right, #10B981 0, #10B981 4px, transparent 4px, transparent 8px)",
-                      }}
-                    ></div>
-                    <span>Walking route</span>
-                  </div>
-                )}
               </div>
             )}
           </div>

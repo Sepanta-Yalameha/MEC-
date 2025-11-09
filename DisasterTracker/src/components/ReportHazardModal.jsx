@@ -5,6 +5,7 @@ export default function ReportHazardModal({
   onClose,
   onSubmit,
   userRole,
+  userLocation,
 }) {
   const [formData, setFormData] = useState({
     title: "",
@@ -15,6 +16,7 @@ export default function ReportHazardModal({
     image: null,
   });
   const [imagePreview, setImagePreview] = useState(null);
+  const [useCurrentLocation, setUseCurrentLocation] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -36,14 +38,23 @@ export default function ReportHazardModal({
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    // Get coordinates from current location or form
+    const latitude = useCurrentLocation
+      ? userLocation.lat
+      : parseFloat(formData.lat);
+    const longitude = useCurrentLocation
+      ? userLocation.lng
+      : parseFloat(formData.lng);
+
     // Validate required fields
-    if (
-      !formData.title ||
-      !formData.description ||
-      !formData.lat ||
-      !formData.lng
-    ) {
+    if (!formData.title || !formData.description) {
       alert("Please fill in all required fields");
+      return;
+    }
+
+    // Validate coordinates if not using current location
+    if (!useCurrentLocation && (!formData.lat || !formData.lng)) {
+      alert("Please enter coordinates or use current location");
       return;
     }
 
@@ -52,9 +63,9 @@ export default function ReportHazardModal({
       title: formData.title,
       description: formData.description,
       riskLevel: formData.riskLevel,
-      lat: parseFloat(formData.lat),
-      lng: parseFloat(formData.lng),
-      reportedBy: userRole === "firefighter" ? "Firefighter" : "Volunteer",
+      lat: latitude,
+      lng: longitude,
+      reportedBy: userRole === "technician" ? "Technician" : "Volunteer",
       timestamp: new Date(),
       image: imagePreview,
     };
@@ -71,6 +82,7 @@ export default function ReportHazardModal({
       image: null,
     });
     setImagePreview(null);
+    setUseCurrentLocation(false);
     onClose();
   };
 
@@ -164,45 +176,102 @@ export default function ReportHazardModal({
             </div>
 
             {/* Location */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="lat"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Latitude *
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Location
                 </label>
-                <input
-                  type="number"
-                  id="lat"
-                  name="lat"
-                  value={formData.lat}
-                  onChange={handleChange}
-                  step="0.000001"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="52.8734"
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="lng"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUseCurrentLocation(!useCurrentLocation);
+                    if (!useCurrentLocation) {
+                      setFormData((prev) => ({ ...prev, lat: "", lng: "" }));
+                    }
+                  }}
+                  className={`text-sm px-3 py-1 rounded-full transition-colors ${
+                    useCurrentLocation
+                      ? "bg-blue-100 text-blue-700 font-medium"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
                 >
-                  Longitude *
-                </label>
-                <input
-                  type="number"
-                  id="lng"
-                  name="lng"
-                  value={formData.lng}
-                  onChange={handleChange}
-                  step="0.000001"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="-118.0814"
-                  required
-                />
+                  {useCurrentLocation
+                    ? "✓ Using Current Location"
+                    : "Use Current Location"}
+                </button>
               </div>
+
+              {!useCurrentLocation && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      htmlFor="lat"
+                      className="block text-xs text-gray-600 mb-1"
+                    >
+                      Latitude
+                    </label>
+                    <input
+                      type="number"
+                      id="lat"
+                      name="lat"
+                      value={formData.lat}
+                      onChange={handleChange}
+                      step="0.000001"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="52.8734"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="lng"
+                      className="block text-xs text-gray-600 mb-1"
+                    >
+                      Longitude
+                    </label>
+                    <input
+                      type="number"
+                      id="lng"
+                      name="lng"
+                      value={formData.lng}
+                      onChange={handleChange}
+                      step="0.000001"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="-118.0814"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {useCurrentLocation && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
+                  <div className="flex items-center space-x-2">
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                    <span>
+                      Hazard will be marked at your current location:{" "}
+                      {userLocation.lat.toFixed(4)},{" "}
+                      {userLocation.lng.toFixed(4)}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Image Upload */}
